@@ -1,0 +1,117 @@
+import pygame, time
+pygame.init()
+
+
+winWidth = 1500
+winHeight = 1000
+win = pygame.display.set_mode((winWidth,winHeight))
+pygame.display.set_caption('Tong Pong')
+icon = pygame.image.load('pong_icon.png')
+pygame.display.set_icon(icon)
+
+
+class Player(object):
+    def __init__(self,x,y,width,height,color):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+        self.color = color
+        self.vel = 5
+
+    def paddle(self):
+        return pygame.draw.rect(win, self.color, (self.x, self.y, self.width, self.height))
+
+
+class Ball(object):
+    def __init__(self,x,y,radius,color):
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.color = color
+        self.direction = True
+        self.vel = [4,4]
+
+    def ball(self):
+        return pygame.draw.circle(win, self.color, (self.x, self.y), self.radius)
+
+
+
+
+
+def drawGame():
+    win.fill((0,0,0))
+    win.blit(leftText, leftRect)
+    win.blit(rightText, rightRect)
+    leftPaddle.paddle()
+    rightPaddle.paddle()
+    pong.ball()
+    pygame.draw.rect(win, (255,255,255), (winWidth*.5-15, 0, 30, winHeight))
+    pygame.display.update()
+
+
+leftScore = []
+rightScore = []
+leftPaddle = Player(25, 100, 25, 200, (255,0,0))
+rightPaddle = Player(1450, 100, 25, 200, (0,0,255))
+pong = Ball(winWidth*.5,winHeight*.5,20, (255,255,0))
+
+run = True
+while run:
+
+    if len(leftScore) == 10 or len(rightScore) == 10:
+        time.sleep(3)
+        run = False
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+
+    keys = pygame.key.get_pressed()
+
+    #Right Paddle Movement
+    if keys[pygame.K_UP] and rightPaddle.y > 0 + rightPaddle.vel:
+        rightPaddle.y -= rightPaddle.vel
+    if keys[pygame.K_DOWN] and rightPaddle.y < winHeight - rightPaddle.height - rightPaddle.vel:
+        rightPaddle.y += rightPaddle.vel
+
+    #Left Paddle Movement
+    if keys[pygame.K_LSHIFT] and leftPaddle.y > 0 + leftPaddle.vel:
+        leftPaddle.y -= leftPaddle.vel
+    if keys[pygame.K_LCTRL] and leftPaddle.y < winHeight - leftPaddle.height - leftPaddle.vel:
+        leftPaddle.y += leftPaddle.vel
+
+    #Ball Movement
+    pong.x += pong.vel[0]
+    pong.y += pong.vel[1]
+    if pong.ball().colliderect(rightPaddle.paddle()) or pong.ball().colliderect(leftPaddle.paddle()):
+        pong.vel[0] = -pong.vel[0]
+    if pong.ball().top < 0 + pong.radius*.25 or pong.ball().bottom > winHeight - pong.radius*.25:
+        pong.vel[1] = -pong.vel[1]
+
+    #Scorecard
+    if pong.ball().left <= 0:
+        rightScore.append('X')
+        time.sleep(1)
+        pong.x,pong.y = winWidth*.5,winHeight*.5
+    if pong.ball().right >= winWidth:
+        leftScore.append('X')
+        time.sleep(1)
+        pong.x,pong.y = winWidth*.5,winHeight*.5
+
+    #Leftside Score
+    font = pygame.font.Font('freesansbold.ttf', 75)
+    leftText = font.render(str(len(leftScore)), True, (255,255,255), (0,0,0))
+    leftRect = leftText.get_rect()
+    leftRect.center = (winWidth * 0.25, 50)
+    #Rightside Score
+    font = pygame.font.Font('freesansbold.ttf', 75)
+    rightText = font.render(str(len(rightScore)), True, (255,255,255), (0,0,0))
+    rightRect = rightText.get_rect()
+    rightRect.center = (winWidth * 0.75, 50)
+
+
+
+
+
+    drawGame()
